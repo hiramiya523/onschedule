@@ -1,0 +1,38 @@
+services:
+  js:
+    build:
+      context: ./docker/js
+      args:
+        - UID=${HOST_UID:-1000}
+        - GID=${HOST_GID:-1000}
+    user: ${HOST_UID}:${HOST_GID}
+    volumes:
+      - ./front:/home/node/front
+    # これ、おかしいよ
+    tty: true
+    working_dir: /home/node/front
+    ports:
+      # - ${BIND_IP:-127.0.0.1}:5173:5173 # vite
+      # - ${BIND_IP:-127.0.0.1}:5555:5555 # prisma
+      # - ${BIND_IP:-127.0.0.1}:3000:3000 # svelte
+      - 5173:5173 # vite
+      - 5555:5555 # prisma
+      - 3000:3000 # svelte
+  pgsql:
+    restart: always
+    build:
+      context: ./docker/db
+      args:
+        - UID=1000
+        - GID=1000
+      # volumes:
+      # - ./docker/db/postgresql/initdb:/docker-entrypoint-initdb.d
+      # - ./data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: "user"
+      POSTGRES_PASSWORD: "pass"
+    healthcheck:
+      test: [ 'CMD', 'pg_isready' ]
+      interval: 5s
+      timeout: 2s
+      retries: 20
